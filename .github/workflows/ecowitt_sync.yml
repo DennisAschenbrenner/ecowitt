@@ -1,0 +1,45 @@
+name: Ecowitt 10min Sync
+
+on:
+  schedule:
+    # Läuft alle 10 Minuten
+    - cron: '*/10 * * * *'
+  workflow_dispatch: # Ermöglicht manuelles Starten zum Testen
+
+permissions:
+  contents: write # Erlaubt dem Skript, die CSV und Status-Datei zu speichern
+
+jobs:
+  run-sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Repository herunterladen
+        uses: actions/checkout@v4
+
+      - name: Python einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Bibliotheken installieren
+        run: pip install -r requirements.txt
+
+      - name: Sync-Skript ausführen
+        env:
+          APPLICATION_KEY: ${{ secrets.APPLICATION_KEY }}
+          API_KEY: ${{ secrets.API_KEY }}
+          MAC_ADRESSE: ${{ secrets.MAC_ADRESSE }}
+          TOKEN: ${{ secrets.TOKEN }}
+          URL: ${{ secrets.URL }}
+          URL_ECOWITT: ${{ secrets.URL_ECOWITT }}
+        run: python sync.py
+
+      - name: Status- und CSV-Datei speichern
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add ecowitt_wind_10min.csv letzter_upload.txt sync.log
+          git commit -m "Auto-Update Wetterdaten" || exit 0
+          git push
