@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 import os
 import numpy as np
 import pandas as pd
@@ -34,7 +35,7 @@ def log(nachricht):
 # ==========================================
 # 2. API-ABRUF (LETZTE 24 STUNDEN IN m/s)
 # ==========================================
-jetzt = datetime.now()
+jetzt = datetime.now(ZoneInfo("Europe/Berlin"))
 vor_24h = jetzt - timedelta(hours=24)
 
 params = {
