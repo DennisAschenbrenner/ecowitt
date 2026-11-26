@@ -7,10 +7,10 @@ import requests
 # ==========================================
 # 1. DEINE ZUGANGSDATEN & PARAMETER EINTRAGEN
 # ==========================================
-APPLICATION_KEY = os.environ.get("ECOWITT_APP_KEY")
-API_KEY = os.environ.get("ECOWITT_API_KEY")
-MAC_ADRESSE = os.environ.get("ECOWITT_MAC")
-TOKEN = os.environ.get("SERVER_TOKEN")
+APPLICATION_KEY = os.environ.get("APPLICATION_KEY")
+API_KEY = os.environ.get("API_KEY")
+MAC_ADRESSE = os.environ.get("MAC_ADRESSE")
+TOKEN = os.environ.get("TOKEN")
 URL = os.environ.get("URL")
 url = os.environ.get("URL_ECOWITT")
 
