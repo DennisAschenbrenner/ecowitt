@@ -34,7 +34,7 @@ jobs:
           TOKEN: ${{ secrets.TOKEN }}
           URL: ${{ secrets.URL }}
           URL_ECOWITT: ${{ secrets.URL_ECOWITT }}
-        run: python sync.py
+        run: python ecowitt_sync_gha.py
 
       - name: Status- und CSV-Datei speichern
         run: |
