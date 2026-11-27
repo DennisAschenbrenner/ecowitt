@@ -1,13 +1,10 @@
 name: Ecowitt 10min Sync
 
 on:
-  schedule:
-    # Läuft alle 10 Minuten
-    - cron: '*/10 * * * *'
-  workflow_dispatch: # Ermöglicht manuelles Starten zum Testen
+  workflow_dispatch: # Wird jetzt von cron-job.org gestartet
 
 permissions:
-  contents: write # Erlaubt dem Skript, die CSV und Status-Datei zu speichern
+  contents: write
 
 jobs:
   run-sync:
