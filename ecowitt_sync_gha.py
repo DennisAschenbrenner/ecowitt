@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
-from zoneinfo import ZoneInfo
 import os
+from zoneinfo import ZoneInfo
 import numpy as np
 import pandas as pd
 import requests
@@ -15,10 +15,12 @@ TOKEN = os.environ.get("TOKEN")
 URL = os.environ.get("URL")
 url = os.environ.get("URL_ECOWITT")
 
-CSV_DATEINAME = "ecowitt_wind_10min.csv"
-
 # Ordner der .py-Datei automatisch ermitteln
-ORDNER = os.path.dirname(os.path.abspath(__file__))
+ORDNER = (
+    os.path.dirname(os.path.abspath(__file__))
+    if "__file__" in locals()
+    else os.getcwd()
+)
 CSV_DATEINAME = os.path.join(ORDNER, "ecowitt_wind_10min.csv")
 STATUS_DATEI = os.path.join(ORDNER, "letzter_upload.txt")
 LOG_DATEI = os.path.join(ORDNER, "sync.log")
@@ -33,16 +35,21 @@ def log(nachricht):
 
 
 # ==========================================
-# 2. API-ABRUF (LETZTE 24 STUNDEN IN m/s)
+# 2. API-ABRUF (AKTUELLER TAG AB 00:00 UHR IN m/s)
 # ==========================================
 jetzt = datetime.now(ZoneInfo("Europe/Berlin"))
-vor_24h = jetzt - timedelta(hours=24)
+start_zeit = jetzt.replace(hour=0, minute=0, second=0, microsecond=0)
+
+# Kurz nach Mitternacht (00:00 - 00:15) auch den Vortag mitnehmen,
+# damit das letzte 10-Minuten-Intervall (23:50 - 00:00) komplett (2x 5min) vorliegt
+if jetzt.hour == 0 and jetzt.minute <= 15:
+  start_zeit = start_zeit - timedelta(days=1)
 
 params = {
     "application_key": APPLICATION_KEY,
     "api_key": API_KEY,
     "mac": MAC_ADRESSE,
-    "start_date": vor_24h.strftime("%Y-%m-%d %H:%M:%S"),
+    "start_date": start_zeit.strftime("%Y-%m-%d %H:%M:%S"),
     "end_date": jetzt.strftime("%Y-%m-%d %H:%M:%S"),
     "cycle_type": "5min",
     "call_back": "wind",
@@ -103,7 +110,19 @@ for col in df.columns:
   else:
     agg_regeln[col] = "mean"
 
-df_10min = df.resample("10min", label="right", closed="left").agg(agg_regeln)
+resampler = df.resample("10min", label="right", closed="left")
+df_10min = resampler.agg(agg_regeln)
+anzahl_5min = resampler.count()
+
+# Nur 10-Minuten-Intervalle behalten, in denen mindestens 2x 5-Min-Werte vorliegen
+df_10min = df_10min[(anzahl_5min >= 2).all(axis=1)]
+
+if df_10min.empty:
+  log(
+      "Noch kein vollständiges 10-Minuten-Intervall (2x 5min) vorhanden – warte"
+      " auf nächsten Lauf."
+  )
+  exit()
 
 for col in df_10min.columns:
   if "direction" not in col:
